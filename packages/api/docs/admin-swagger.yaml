@@ -1,0 +1,790 @@
+openapi: 3.0.0
+info:
+  title: API
+  version: 1.0.0
+components:
+  schemas:
+    BookingAccess:
+      type: object
+      properties:
+        booking_id:
+          type: string
+        status:
+          type: string
+    BookingEntity:
+      type: object
+      properties:
+        capacity:
+          type: integer
+        created_at:
+          type: string
+        height:
+          type: integer
+        id:
+          type: string
+        title:
+          type: string
+        type:
+          $ref: '#/components/schemas/BookingType'
+        updated_at:
+          type: string
+        width:
+          type: integer
+        x:
+          type: integer
+        "y":
+          type: integer
+    Entity:
+      type: object
+      properties:
+        capacity:
+          type: integer
+        floor_id:
+          type: string
+        height:
+          type: integer
+        id:
+          type: string
+        title:
+          type: string
+        type:
+          $ref: '#/components/schemas/BookingType'
+        width:
+          type: integer
+        x:
+          type: integer
+        "y":
+          type: integer
+    FloorEntity:
+      type: object
+      properties:
+        created_at:
+          type: string
+        id:
+          type: string
+        name:
+          type: string
+        updated_at:
+          type: string
+    Guest:
+      type: object
+      properties:
+        booking_id:
+          type: string
+        created_at:
+          type: string
+        email:
+          type: string
+    GuestId:
+      type: object
+      properties:
+        email:
+          type: string
+    Order:
+      type: object
+      properties:
+        booking_id:
+          type: string
+        booking_title:
+          type: string
+        completed:
+          type: boolean
+        created_at:
+          type: string
+        id:
+          type: string
+        thing:
+          type: string
+        updated_at:
+          type: string
+    Orders:
+      type: object
+      properties:
+        count:
+          type: integer
+        orders:
+          type: array
+          items:
+            $ref: '#/components/schemas/Order'
+    Stats:
+      type: object
+      properties:
+        count:
+          type: integer
+    UpsertFloor:
+      type: object
+      properties:
+        entities:
+          type: array
+          items:
+            $ref: '#/components/schemas/Entity'
+        id:
+          type: string
+        name:
+          type: string
+    VerificationData:
+      type: object
+      properties:
+        passport:
+          type: string
+        verified:
+          type: boolean
+    JsonError:
+      type: object
+      properties:
+        error:
+          type: string
+    Message:
+      type: object
+      properties:
+        message:
+          type: string
+    BookingType:
+      type: string
+      enum:
+        - ROOM
+        - OPEN_SPACE
+      x-enum-varnames:
+        - ROOM
+        - OPENSPACE
+  securitySchemes:
+    Bearer:
+      type: apiKey
+      name: Authorization
+      in: header
+paths:
+  /admin/booking/{id}/access:
+    get:
+      summary: Check user access
+      description: Check status of user booking or invitation for nearest 12 hours. Avaliable only for ADMINs
+      tags:
+        - Booking
+      security:
+        - Bearer: []
+      parameters:
+        - name: id
+          in: path
+          description: User id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Successful check access. Status can has value READY, NOT_READY or PENDING
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookingAccess'
+        '400':
+          description: Id must be uuid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JsonError'
+        '401':
+          description: Unauth
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JsonError'
+        '403':
+          description: Invalid role
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JsonError'
+        '500':
+          description: Something going wrong...
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JsonError'
+  /admin/booking/{id}/guests:
+    get:
+      summary: Get invites
+      description: Get invites of room.
+      tags:
+        - Guests
+      security:
+        - Bearer: []
+      parameters:
+        - name: id
+          in: path
+          description: Booking id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Successfull get
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Guest'
+        '400':
+          description: Id must be uuid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JsonError'
+        '401':
+          description: Unauth
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JsonError'
+        '403':
+          description: Not your booking
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JsonError'
+        '500':
+          description: Something going wrong...
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JsonError'
+    post:
+      summary: Create invite
+      description: Create invite to room.
+      tags:
+        - Guests
+      security:
+        - Bearer: []
+      parameters:
+        - name: id
+          in: path
+          description: Booking id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        description: User Email
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GuestId'
+      responses:
+        '204':
+          description: Successfull invite
+        '400':
+          description: Id must be uuid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JsonError'
+        '401':
+          description: Unauth
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JsonError'
+        '403':
+          description: Not your booking
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JsonError'
+        '500':
+          description: Something going wrong...
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JsonError'
+  /admin/booking/{id}/guests/{email}:
+    delete:
+      summary: Delete invite
+      description: Delete invite to room.
+      tags:
+        - Guests
+      security:
+        - Bearer: []
+      parameters:
+        - name: id
+          in: path
+          description: Booking id
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: email
+          in: path
+          description: Email
+          required: true
+          schema:
+            type: string
+            format: email
+      responses:
+        '200':
+          description: Successfull get
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Guest'
+        '400':
+          description: Id must be uuid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JsonError'
+        '401':
+          description: Unauth
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JsonError'
+        '403':
+          description: Not your booking
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JsonError'
+        '500':
+          description: Something going wrong...
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JsonError'
+  /admin/booking/stats:
+    get:
+      summary: Get stats
+      description: Get stats for booking creations. Avaliable only for ADMINs
+      tags:
+        - Booking
+      security:
+        - Bearer: []
+      parameters:
+        - name: filter
+          in: query
+          description: Parametr for stats specify. Must be 'day', 'week' or 'month'
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful get of stats
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Stats'
+        '401':
+          description: Unauth
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JsonError'
+        '403':
+          description: Invalid role
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JsonError'
+        '500':
+          description: Something going wrong...
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JsonError'
+  /admin/layout/entities/{id}:
+    get:
+      summary: Get entity by id
+      description: Get entity by id
+      tags:
+        - Entity
+      parameters:
+        - name: id
+          in: path
+          description: Entity id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookingEntity'
+        '400':
+          description: Id must be uuid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JsonError'
+        '401':
+          description: Unauth
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JsonError'
+        '403':
+          description: Invalid role
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JsonError'
+        '500':
+          description: Something going wrong...
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JsonError'
+  /admin/layout/floors:
+    get:
+      summary: Get floors
+      description: Get list of floor
+      tags:
+        - Entity
+      responses:
+        '200':
+          description: Succesful get of floors
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/FloorEntity'
+        '500':
+          description: Something going wrong...
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JsonError'
+    post:
+      summary: Save layout
+      description: Save layout. Only for ADMINs
+      tags:
+        - Entity
+      requestBody:
+        description: Upsert data
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpsertFloor'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Message'
+        '400':
+          description: Id must be uuid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JsonError'
+        '401':
+          description: Unauth
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JsonError'
+        '403':
+          description: Invalid role
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JsonError'
+        '500':
+          description: Something going wrong...
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JsonError'
+  /admin/layout/floors/{id}:
+    delete:
+      summary: Delete floor
+      description: Delete floor. Only for ADMINs
+      tags:
+        - Entity
+      parameters:
+        - name: id
+          in: path
+          description: Floor id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Successful delete
+        '400':
+          description: Id must be uuid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JsonError'
+        '401':
+          description: Unauth
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JsonError'
+        '403':
+          description: Invalid role
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JsonError'
+        '500':
+          description: Something going wrong...
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JsonError'
+    get:
+      summary: Get entities for floor
+      description: Get entities for floor
+      tags:
+        - Entity
+      parameters:
+        - name: id
+          in: path
+          description: Floor id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Successful get entities
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/BookingEntity'
+        '400':
+          description: Id must be uuid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JsonError'
+        '500':
+          description: Something going wrong...
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JsonError'
+  /admin/orders:
+    get:
+      summary: Get orders
+      description: Get orders with pagination and filters. Only for ADMINs.
+      tags:
+        - Orders
+      security:
+        - Bearer: []
+      parameters:
+        - name: page
+          in: query
+          description: Page
+          schema:
+            type: integer
+        - name: size
+          in: query
+          description: Size
+          schema:
+            type: integer
+        - name: completed
+          in: query
+          description: Completed. Complteted must be 'true', 'false' or ''
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Succesfull get of orders
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Orders'
+        '400':
+          description: Id must be uuid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JsonError'
+        '401':
+          description: Unauth
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JsonError'
+        '403':
+          description: Invalid role
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JsonError'
+        '500':
+          description: Something going wrong...
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JsonError'
+  /admin/orders/{id}:
+    post:
+      summary: Set order completed
+      description: Set order. Only for ADMINs
+      tags:
+        - Orders
+      security:
+        - Bearer: []
+      parameters:
+        - name: id
+          in: path
+          description: user id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Successful set order status
+        '400':
+          description: Id must be uuid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JsonError'
+        '500':
+          description: Something going wrong...
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JsonError'
+  /admin/orders/stats:
+    get:
+      summary: Get stats
+      description: Get stats of order creations. Only for ADMINs.
+      tags:
+        - Orders
+      parameters:
+        - name: filter
+          in: query
+          description: Filter
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Stats'
+        '500':
+          description: Something going wrong...
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JsonError'
+  /admin/verification/{id}/check:
+    get:
+      summary: Check verification
+      description: Returns user verification data. Only for ADMINs
+      tags:
+        - Verification
+      security:
+        - Bearer: []
+      parameters:
+        - name: id
+          in: path
+          description: User id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VerificationData'
+        '400':
+          description: Id must be uuid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JsonError'
+        '401':
+          description: Unauth
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JsonError'
+        '403':
+          description: Invalid role
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JsonError'
+        '500':
+          description: Something going wrong...
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JsonError'
+  /admin/verification/{id}/set:
+    post:
+      summary: Set verification
+      description: Set user verification data. Only for ADMINs
+      tags:
+        - Verification
+      security:
+        - Bearer: []
+      parameters:
+        - name: id
+          in: path
+          description: User id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                passport:
+                  type: string
+                  format: binary
+                  description: passport image
+      responses:
+        '204':
+          description: Successful setup of verification data.
+        '400':
+          description: Id must be uuid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JsonError'
+        '401':
+          description: Unauth
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JsonError'
+        '403':
+          description: Invalid role
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JsonError'
+        '500':
+          description: Something going wrong...
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JsonError'

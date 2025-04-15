@@ -1,0 +1,218 @@
+openapi: "3.0.3"
+info:
+  title: Coffies API
+  version: "1.0"
+
+servers:
+  - url: http://localhost:8080/api/v1
+    description: local server
+  - url: https://prod-team-11-78orvads.REDACTED/api/v1
+    description: PROOOOOOD
+
+security:
+  - bearerAuth: []
+
+paths:
+  /booking:
+    post:
+      tags:
+        - Booking
+      summary: Create a new booking
+      operationId: createBooking
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BookingCreate"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Booking"
+    get:
+      tags:
+        - Booking
+      summary: Get list of bookings
+      operationId: listBookings
+      responses:
+        "200":
+          description: List of bookings
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Booking"
+
+  /booking/{id}:
+    parameters:
+      - name: id
+        in: path
+        description: ID of the booking
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      tags:
+        - Booking
+      summary: Get booking by ID
+      operationId: getBooking
+      responses:
+        "200":
+          description: Booking found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Booking"
+        "404":
+          description: Booking not found
+    put:
+      tags:
+        - Booking
+      summary: Update booking by ID
+      operationId: updateBooking
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BookingUpdate"
+      responses:
+        "200":
+          description: Booking updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Booking"
+        "404":
+          description: Booking not found
+    delete:
+      tags:
+        - Booking
+      summary: Delete booking by ID
+      operationId: deleteBooking
+      responses:
+        "204":
+          description: Booking deleted successfully
+        "404":
+          description: Booking not found
+
+components:
+  schemas:
+    BookingEntity:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum:
+            - ROOM
+            - OPEN_SPACE
+        title:
+          type: string
+        x:
+          type: integer
+        y:
+          type: integer
+        floor:
+          type: integer
+        width:
+          type: integer
+        height:
+          type: integer
+      required:
+        - id
+        - type
+        - title
+        - x
+        - y
+        - floor
+        - width
+        - height
+    BookingCreate:
+      type: object
+      properties:
+        entity_id:
+          type: string
+          format: uuid
+        time_from:
+          type: integer
+        time_to:
+          type: integer
+        preferences:
+          type: array
+          items:
+            type: string
+            enum:
+              - WHITEBOARD
+              - EBOARD
+              - SPEAKERS
+              - MICROPHONES
+              - FRIDGE
+      required:
+        - entity_id
+        - time_from
+        - time_to
+        - preferences
+    BookingUpdate:
+      type: object
+      properties:
+        time_from:
+          type: integer
+        time_to:
+          type: integer
+        preferences:
+          type: array
+          items:
+            type: string
+            enum:
+              - WHITEBOARD
+              - EBOARD
+              - SPEAKERS
+              - MICROPHONES
+              - FRIDGE
+    Booking:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        entity_id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
+        time_from:
+          type: integer
+        time_to:
+          type: integer
+        preferences:
+          type: array
+          items:
+            type: string
+            enum:
+              - WHITEBOARD
+              - EBOARD
+              - SPEAKERS
+              - MICROPHONES
+              - FRIDGE
+      required:
+        - id
+        - user_id
+        - entity_id
+        - time_from
+        - time_to
+        - preferences
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

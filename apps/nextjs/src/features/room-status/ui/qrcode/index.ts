@@ -1,0 +1,1 @@
+export { RoomStatusQrcode } from "./room-status-qrcode";
